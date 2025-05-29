@@ -1,0 +1,75 @@
+import clsx from "clsx";
+import { useEffect, useRef } from "react";
+import ReactMarkdown from "react-markdown";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+import "../index.css";
+
+interface Props {
+  localResponses: Array<{
+    request: string;
+    response: string;
+  }>;
+}
+
+const OutputMessage = ({ localResponses }: Props) => {
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [localResponses]);
+
+  return (
+    <div className="flex-1 overflow-y-auto w-full py-6 space-y-8 scrollable" >
+      {localResponses?.map((res, index) => (
+        <div
+          key={index}
+          className="w-[55%] ps-6 mx-auto flex flex-col justify-start gap-4"
+        >
+          <p className="bg-gray-700 max-w-sm rounded-2xl px-4 py-2 self-end me-12 mb-8">
+              {res.request}
+          </p>
+          <ReactMarkdown
+            components={{
+              code({ inline, className, children, ...props }) {
+                const match = /language-(\w+)/.exec(className ?? "");
+
+                if (!inline && match) {
+                  return (
+                    <SyntaxHighlighter
+                      style={oneDark}
+                      language={match[1]}
+                      PreTag="div"
+                      {...props}
+                    >
+                      {String(children).replace(/\n$/, "")}
+                    </SyntaxHighlighter>
+                  );
+                }
+
+                // Inline code styling
+                return (
+                  <code
+                    className={clsx(
+                      "bg-gray-200 dark:bg-gray-700 text-sm px-1 py-1 rounded",
+                      "font-mono text-red-500",
+                      "leading-loose"
+                    )}
+                    {...props}
+                  >
+                    {children}
+                  </code>
+                );
+              },
+            }}
+          >
+            {res.response}
+          </ReactMarkdown>
+        </div>
+      ))}
+      <div ref={messagesEndRef} />
+    </div>
+  );
+};
+
+export default OutputMessage;

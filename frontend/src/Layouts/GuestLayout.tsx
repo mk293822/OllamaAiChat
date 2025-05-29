@@ -1,13 +1,11 @@
-import { type PropsWithChildren } from 'react'
-import Navbar from '../Components/Navbar'
+import { type PropsWithChildren } from "react";
 
-const GuestLayout = ({children}: PropsWithChildren) => {
+const GuestLayout = ({ children }: PropsWithChildren) => {
   return (
-    <div className="min-h-screen dark:bg-gray:800">
-      <Navbar />
-      <main>{children}</main>
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white">
+      <main className="flex flex-col h-screen">{children}</main>
     </div>
   );
-}
+};
 
-export default GuestLayout
+export default GuestLayout;
