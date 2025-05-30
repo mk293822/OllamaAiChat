@@ -1,113 +1,43 @@
-import { useRef, useState } from "react";
-import AuthenticatedLayout from "../Layouts/AuthenticatedLayout";
-import InputForm from "../Components/InputForm";
-import { getCookie } from "../helper";
-import OutputMessage from "../Components/OutputMessage";
+import { Button } from "../Components/Button";
+import GuestLayout from "../Layouts/GuestLayout";
+import { Link } from "react-router-dom";
+import { authRoutes } from "../routes";
 
 const Welcome = () => {
-  const [loading, setLoading] = useState(false);
-  const [localResponses, setLocalResponses] = useState<
-    Array<{
-      request: string;
-      response: string;
-    }>
-  >([]);
-  const controllerRef = useRef<AbortController | null>(null);
-
-  const handleSubmit = async (text: string) => {
-    setLoading(true);
-    if (controllerRef.current) {
-      controllerRef.current.abort(); // stop previous
-    }
-
-    const controller = new AbortController();
-    controllerRef.current = controller;
-
-    try {
-      // Get CSRF token first
-      await fetch("http://127.0.0.1:8000/sanctum/csrf-cookie", {
-        credentials: "include",
-      });
-
-      const csrfToken = getCookie("XSRF-TOKEN");
-
-      setLocalResponses((prev) => [...prev, { request: text, response: "" }]);
-      // Now send streaming fetch request
-      const res = await fetch("http://127.0.0.1:8000/api/ask", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-XSRF-TOKEN": decodeURIComponent(csrfToken ?? ""),
-        },
-        credentials: "include", // Required to include the session cookie
-        body: JSON.stringify({ text: text }),
-        signal: controllerRef.current.signal,
-      });
-
-      const reader = res.body?.getReader();
-      const decoder = new TextDecoder("utf-8");
-
-      if (reader) {
-        let currentText = "";
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const chunk = decoder.decode(value, { stream: true });
-
-          for (const char of chunk) {
-            await new Promise((resolve) => setTimeout(resolve, 10)); // typing speed
-
-            currentText += char;
-
-            // Update state with new array (live typing)
-            setLocalResponses((prev) => {
-              const updated = [...prev];
-              updated[updated.length - 1].response = currentText; // update last message
-              return updated;
-            });
-          }
-        }
-      }
-    } catch (error: unknown) {
-      if (
-        typeof error === "object" &&
-        error !== null &&
-        "name" in error &&
-        "message" in error &&
-        (error as { name: string }).name !== "AbortError" &&
-        (error as { message: string }).message !== "The user aborted a request."
-      ) {
-        console.error("Error in handleSubmit:", error);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const stopContent = () => {
-    if (controllerRef.current) {
-      controllerRef.current.abort();
-      controllerRef.current = null;
-      setLoading(false);
-    }
-  };
-
   return (
-    <AuthenticatedLayout>
-      <div className="flex flex-col h-screen bg-white dark:bg-gray-800">
-        {/* Chat Container */}
-        <OutputMessage localResponses={localResponses} />
+    <GuestLayout>
+      {/* Header/Navbar */}
+      <nav className="flex items-center justify-between px-6 py-4 bg-gray-800 shadow-md">
+        <h1 className="text-2xl font-bold">Gemma3</h1>
+        <div className="flex gap-4">
+          <Button className="bg-blue-600 hover:bg-blue-700 px-4 py-2 text-sm md:text-base">
+            <Link to={authRoutes.login}>Login</Link>
+          </Button>
+          <Button className="bg-transparent border-green-700 border text-green-600 hover:text-white hover:bg-green-700 px-4 py-2 text-sm md:text-base">
+            <Link to={authRoutes.register}>Register</Link>
+          </Button>
+        </div>
+      </nav>
 
-        {/* Input Bar */}
-        <InputForm
-          loading={loading}
-          handleSubmit={handleSubmit}
-          stopContent={stopContent}
-        />
-      </div>
-    </AuthenticatedLayout>
+      {/* Main Content */}
+      <main className="flex-1 h-[calc(100vh-130px)] flex flex-col items-center justify-center px-4 text-center">
+        <h1 className="text-3xl md:text-5xl font-bold mb-4">
+          Welcome to Gemma3 AI Assistant
+        </h1>
+        <p className="text-lg md:text-xl mb-8 max-w-2xl">
+          Your personal, private AI companion powered by the locally running
+          Gemma3 model with Ollama.
+        </p>
+        <Button className="bg-gray-600 hover:bg-gray-500 px-6 py-2 text-lg">
+          <Link to={authRoutes.login}>Get Start</Link>
+        </Button>
+      </main>
+
+      {/* Footer */}
+      <footer className="text-center text-sm p-4 text-gray-400">
+        &copy; {new Date().getFullYear()} Gemma3 by Ollama. All rights reserved.
+      </footer>
+    </GuestLayout>
   );
 };
 

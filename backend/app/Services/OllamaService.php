@@ -3,61 +3,64 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class OllamaService
 {
     public function chat($prompt)
     {
-        try{
+
+        try {
             $response = new StreamedResponse(function () use ($prompt) {
-            // Making the request to the external service
-            $serviceResponse = Http::withHeaders([
-                'Content-Type' => 'application/json',
-            ])->withOptions([
-                'stream' => true,  // Enable streaming
-            ])->post('http://localhost:11434/api/chat', [
-                'model' => 'gemma3:1b',
-                'messages'=> [
-                    [
-                        'role' => 'user',
-                        'content' => $prompt
-                    ]
-                ],
-                'stream' => true,
-            ]);
+                $messages = session('chat_history', []);
 
-            $body = $serviceResponse->getBody();
-            while (!$body->eof()) {
-                $chunk = $body->read(512);  // Read in chunks
+                $messages[] = ['role' => 'user', 'content' => $prompt];
 
-                // Split lines and decode
-                foreach (explode("\n", $chunk) as $line) {
-                    $line = trim($line);
-                    if (!$line) continue;
+                $serviceResponse = Http::withHeaders([
+                    'Content-Type' => 'application/json',
+                ])->withOptions([
+                    'stream' => true,
+                ])->post('http://localhost:11434/api/chat', [
+                    'model' => 'gemma3:1b',
+                    'messages' => $messages,
+                    'stream' => true,
+                ]);
 
-                    $json = json_decode($line, true);
+                $body = $serviceResponse->getBody();
+                $assistantReply = '';
 
-                    // Ollama streaming sends partial chunks with 'message'
-                    if (isset($json['message']['content'])) {
-                        echo $json['message']['content'];
-                        ob_flush();
-                        flush();
+                while (!$body->eof()) {
+                    $chunk = $body->read(512);
+
+                    foreach (explode("\n", $chunk) as $line) {
+                        $line = trim($line);
+                        if (!$line) continue;
+
+                        $json = json_decode($line, true);
+
+                        if (isset($json['message']['content'])) {
+                            $content = $json['message']['content'];
+                            $assistantReply .= $content;
+
+                            echo $content;
+                            ob_flush();
+                            flush();
+                        }
                     }
                 }
-            }
-        });
-    } catch (\Exception $e) {
-        // Optional: log error or exit cleanly
-        echo "\n\n[Server stopped: {$e->getMessage()}]";
-    }
 
+                // Save the complete assistant message once at the end
+                $messages[] = ['role' => 'assistant', 'content' => $assistantReply];
+                session(['chat_history' => $messages]);
+                Log::info(['mes' => session('chat_history')]);
+            });
 
-        // Set appropriate headers for streaming
-        $response->headers->set('Content-Type', 'text/plain');
-        $response->headers->set('Cache-Control', 'no-cache');
-
-        return $response;
+            $response->headers->set('Content-Type', 'text/event-stream');
+            return $response;
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 
 }

@@ -20,14 +20,19 @@ const OutputMessage = ({ localResponses }: Props) => {
   }, [localResponses]);
 
   return (
-    <div className="flex-1 overflow-y-auto w-full py-6 space-y-8 scrollable" >
+    <div
+      className={clsx(
+        "overflow-y-auto w-full py-6 space-y-8 scrollable",
+        localResponses.length > 0 ? "flex-1" : ""
+      )}
+    >
       {localResponses?.map((res, index) => (
         <div
           key={index}
           className="w-[55%] ps-6 mx-auto flex flex-col justify-start gap-4"
         >
           <p className="bg-gray-700 max-w-sm rounded-2xl px-4 py-2 self-end me-12 mb-8">
-              {res.request}
+            {res.request}
           </p>
           <ReactMarkdown
             components={{
