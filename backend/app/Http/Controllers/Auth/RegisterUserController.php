@@ -30,7 +30,7 @@ class RegisterUserController extends Controller
         Auth::login($user);
 
         return response()->json(['message' => 'Registered Successfully'])->withCookie(
-            cookie('auth_token', $token, 60 * 24, null, null, true, false, false, "Strict")
+            cookie('auth_token', $token, 60 * 24, null, null, true, true, false, "Strict")
         );
     }
 
@@ -41,7 +41,7 @@ class RegisterUserController extends Controller
         $token = Auth::user()->createToken('auth_token')->plainTextToken;
 
         return response()->json(['message' => 'Logged In Successfully'])->withCookie(
-            cookie('auth_token', $token, 60 * 24, null, null, true, false, false, "Strict")
+            cookie('auth_token', $token, 60 * 24, null, null, true, true, false, "Strict")
         );
     }
 

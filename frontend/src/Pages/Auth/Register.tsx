@@ -2,8 +2,9 @@ import GuestLayout from "../../Layouts/GuestLayout";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "../../Components/Button";
 import { authRoutes, routes } from "../../routes";
-import axios from "axios";
 import { useForm } from "react-hook-form";
+import { useState } from "react";
+import ErrorModal from "../../Components/ErrorModal";
 
 interface FormData {
   name: string;
@@ -12,6 +13,8 @@ interface FormData {
 }
 
 const Register = () => {
+  const [postError, setPostError] = useState<null | string>(null);
+
   const navigate = useNavigate();
 
   const {
@@ -22,23 +25,23 @@ const Register = () => {
   } = useForm<FormData>();
 
   const onSubmit = async (data: FormData) => {
-    await axios.get("/sanctum/csrf-cookie");
+    const res = await fetch("/api/register", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
 
-    await axios
-      .post("/api/register", data)
-      .then(() => {
-        navigate(routes.dashboard);
-      })
-      .catch((error) => {
-        if (error.response.data.errors && error.response.status === 422) {
-          Object.entries(error.response.data.errors).forEach((err) => {
-            setError(err[0] as keyof FormData, {
-              type: "manual",
-              message: err[1] as string,
-            });
-          });
-        }
+    if (res.ok) {
+      navigate(routes.dashboard);
+    } else if (res.status === 422) {
+      Object.entries(res.statusText).forEach((err) => {
+        setError(err[0] as keyof FormData, {
+          type: "manual",
+          message: err[1],
+        });
       });
+    } else {
+      setPostError(res.statusText);
+    }
   };
 
   return (
@@ -91,6 +94,9 @@ const Register = () => {
           </p>
         </div>
       </div>
+
+      {/* errir */}
+      {postError && <ErrorModal message={postError} />}
     </GuestLayout>
   );
 };

@@ -8,7 +8,8 @@ export const authRoutes = {
   register: "/register",
 };
 export const errorRoutes = {
-    notFound: "*",
-}
+  notFound: "*",
+  forbidden: "/403",
+};
 
 

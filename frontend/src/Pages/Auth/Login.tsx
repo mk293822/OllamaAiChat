@@ -3,8 +3,8 @@ import GuestLayout from "../../Layouts/GuestLayout";
 import { Link, useNavigate } from "react-router-dom";
 import { authRoutes, routes } from "../../routes";
 import { useForm } from "react-hook-form";
-import axios from "axios";
 import { useEffect, useState } from "react";
+import ErrorModal from "../../Components/ErrorModal";
 
 interface FormData {
   email: string;
@@ -12,8 +12,10 @@ interface FormData {
 }
 
 const Login = () => {
-  const navigate = useNavigate();
   const [secondLeft, setSecondLeft] = useState<number | null>(null);
+  const [postError, setPostError] = useState<null | string>(null);
+
+  const navigate = useNavigate();
 
   const {
     handleSubmit,
@@ -23,43 +25,43 @@ const Login = () => {
   } = useForm<FormData>();
 
   const onSubmit = async (data: FormData) => {
-    await axios.get("/sanctum/csrf-cookie");
+    const res = await fetch("/api/login", {
+      body: JSON.stringify(data),
+      method: "POST",
+    });
 
-    await axios
-      .post("/api/login", data)
-      .then(() => {
-        navigate(routes.dashboard);
-      })
-      .catch((error) => {
-        if (error.response.data.errors && error.response.status === 422) {
-          const match = error.response.data.message.match(/(\d+)\s+seconds?/);
-          const seconds = match ? parseInt(match[1]) : null;
+    if (res.ok) {
+      navigate(routes.dashboard);
+    } else if (res.status === 422) {
+      const match = res.statusText.match(/(\d+)\s+seconds?/);
+      const seconds = match ? parseInt(match[1]) : null;
 
-          if (seconds) {
-            setSecondLeft(seconds);
-          } else {
-            Object.entries(error.response.data.errors).forEach((err) => {
-              setError(err[0] as keyof FormData, {
-                type: "manual",
-                message: err[1] as string,
-              });
-            });
-          }
-        }
-      });
+      if (seconds) {
+        setSecondLeft(seconds);
+      } else {
+        Object.entries(res.statusText).forEach((err) => {
+          setError(err[0] as keyof FormData, {
+            type: "manual",
+            message: err[1],
+          });
+        });
+      }
+    } else {
+      setPostError(res.statusText);
+    }
   };
 
   useEffect(() => {
     if (secondLeft && secondLeft > 0) {
       const intervalId = setInterval(() => {
         setSecondLeft((prevSeconds) => prevSeconds && prevSeconds - 1);
-      }, 1000); 
+      }, 1000);
 
-      return () => clearInterval(intervalId); 
+      return () => clearInterval(intervalId);
     }
   }, [secondLeft]);
 
-    useEffect(() => {
+  useEffect(() => {
     if (secondLeft && secondLeft > 0) {
       setError("email", {
         type: "manual",
@@ -114,6 +116,9 @@ const Login = () => {
           </p>
         </div>
       </div>
+
+      {/* error */}
+      {postError && <ErrorModal message={postError} />}
     </GuestLayout>
   );
 };
