@@ -3,8 +3,10 @@ import GuestLayout from "../../Layouts/GuestLayout";
 import { Link, useNavigate } from "react-router-dom";
 import { authRoutes, routes } from "../../routes";
 import { useForm } from "react-hook-form";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import ErrorModal from "../../Components/ErrorModal";
+import UserContext from "../../Context/UserContext";
+import api from "../../api";
 
 interface FormData {
   email: string;
@@ -14,7 +16,7 @@ interface FormData {
 const Login = () => {
   const [secondLeft, setSecondLeft] = useState<number | null>(null);
   const [postError, setPostError] = useState<null | string>(null);
-
+  const { token, fetchUser } = useContext(UserContext);
   const navigate = useNavigate();
 
   const {
@@ -25,29 +27,34 @@ const Login = () => {
   } = useForm<FormData>();
 
   const onSubmit = async (data: FormData) => {
-    const res = await fetch("/api/login", {
-      body: JSON.stringify(data),
-      method: "POST",
-    });
-
-    if (res.ok) {
+    if (token) {
       navigate(routes.dashboard);
-    } else if (res.status === 422) {
-      const match = res.statusText.match(/(\d+)\s+seconds?/);
-      const seconds = match ? parseInt(match[1]) : null;
+      return;
+    }
+    try {
+      await api.post("/api/login", data);
+      navigate(routes.dashboard);
+    } catch (error: any) {
+      if (error.response.status === 422) {
+        const regex = /(\d+)\s+seconds?/;
+        const match = regex.exec(error.response.data.message);
+        const seconds = match ? parseInt(match[1]) : null;
 
-      if (seconds) {
-        setSecondLeft(seconds);
-      } else {
-        Object.entries(res.statusText).forEach((err) => {
-          setError(err[0] as keyof FormData, {
-            type: "manual",
-            message: err[1],
+        if (seconds) {
+          setSecondLeft(seconds);
+        } else {
+          Object.entries(error.response.data.errors).forEach((err) => {
+            setError(err[0] as keyof FormData, {
+              type: "manual",
+              message: err[1],
+            });
           });
-        });
+        }
+      } else {
+        setPostError(error.response.statusText);
       }
-    } else {
-      setPostError(res.statusText);
+    } finally {
+      fetchUser();
     }
   };
 
@@ -73,7 +80,7 @@ const Login = () => {
         message: "You can try logging in again now.",
       });
     }
-  }, [secondLeft]);
+  }, [secondLeft, setError]);
 
   return (
     <GuestLayout>

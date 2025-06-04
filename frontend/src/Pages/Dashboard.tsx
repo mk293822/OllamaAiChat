@@ -1,9 +1,11 @@
-import { useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import AuthenticatedLayout from "../Layouts/AuthenticatedLayout";
 import InputForm from "../Components/InputForm";
-import { getCookie } from "../helper";
 import OutputMessage from "../Components/OutputMessage";
 import ErrorModal from "../Components/ErrorModal";
+import { useNavigate, useParams } from "react-router-dom";
+import { authRoutes } from "../routes";
+import UserContext from "../Context/UserContext";
 
 interface StreamResponse {
   body: ReadableStream<Uint8Array> | null;
@@ -19,6 +21,19 @@ const Dashboard = () => {
   const [localResponses, setLocalResponses] = useState<LocalResponse[]>([]);
   const controllerRef = useRef<AbortController | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const { token } = useContext(UserContext);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const { conversation_id } = useParams();
+
+  // get the conversation from the route
+  useEffect(() => {
+    if (conversation_id) {
+      setConversationId(conversation_id);
+    } else {
+      setConversationId(null);
+    }
+  }, [conversation_id]);
 
   const handleSubmit = async (text: string) => {
     setLoading(true);
@@ -29,27 +44,41 @@ const Dashboard = () => {
     const controller = new AbortController();
     controllerRef.current = controller;
 
-    const token = getCookie("auth_token");
+    try {
+      const res = await fetch(`/api/ask/${conversationId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${decodeURIComponent(token ?? "")}`,
+        },
+        body: JSON.stringify({ text: text }),
+        signal: controllerRef.current.signal,
+      });
 
-    // Now send streaming fetch request
-    const res = await fetch("/api/ask", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${decodeURIComponent(token ?? "")}`,
-      },
-      body: JSON.stringify({ text: text }),
-      signal: controllerRef.current.signal,
-    });
-
-    if (res.ok) {
+      // get conversation id if current path is /dashboard and go to /dashboard/c/conversation_id(uuid)
+      const newConversationId = res.headers.get("X-Convo-Id");
+      if (!conversationId && newConversationId) {
+        setConversationId(newConversationId);
+        navigate(`/dashboard/c/${newConversationId}`, { replace: true });
+      }
+      // Stream resonse
       setLocalResponses((prev) => [...prev, { request: text, response: "." }]);
       await handleStreamResponse(res);
-    } else {
-      setError(res.statusText);
+    } catch (error: any) {
+      if (error.response.status === 401) {
+        navigate(authRoutes.login);
+        setError(error.response.statusText);
+      } else {
+        setError(error.response.statusText);
+      }
+    } finally {
+      setLoading(false);
     }
+
+    // Now send streaming fetch request
   };
 
+  // Handle the Stream Response form form
   const handleStreamResponse = async (res: StreamResponse): Promise<void> => {
     const reader: ReadableStreamDefaultReader<Uint8Array> | undefined =
       res.body?.getReader();
@@ -62,7 +91,6 @@ const Dashboard = () => {
         const { done, value }: { done: boolean; value?: Uint8Array } =
           await reader.read();
         if (done) {
-          setLoading(false);
           break;
         }
 
@@ -84,6 +112,7 @@ const Dashboard = () => {
     }
   };
 
+  // Stop the request
   const stopContent = () => {
     if (controllerRef.current) {
       controllerRef.current.abort();

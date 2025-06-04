@@ -8,11 +8,11 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class OllamaService
 {
-    public function chat($prompt)
+    public function chat($prompt, $conversation_id)
     {
 
         try {
-            $response = new StreamedResponse(function () use ($prompt) {
+            return new StreamedResponse(function () use ($prompt) {
                 $messages = session('chat_history', []);
 
                 $messages[] = ['role' => 'user', 'content' => $prompt];
@@ -53,11 +53,11 @@ class OllamaService
                 // Save the complete assistant message once at the end
                 $messages[] = ['role' => 'assistant', 'content' => $assistantReply];
                 session(['chat_history' => $messages]);
-                Log::info(['mes' => session('chat_history')]);
-            });
-
-            $response->headers->set('Content-Type', 'text/event-stream');
-            return $response;
+            }, 200, [
+                'Content-Type' => 'text/event-stream',
+                'X-Convo-Id'   => $conversation_id,
+                'Cache-Control' => 'no-cache'
+            ]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }

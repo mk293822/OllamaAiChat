@@ -1,58 +1,41 @@
-import { useEffect, useState, type PropsWithChildren } from "react";
+import { useLayoutEffect, useState, type PropsWithChildren } from "react";
 import type { User } from "../types";
-import { getCookie } from "../helper";
 import UserContext from "./UserContext";
+import api from "../api";
+import { getCookie } from "../helper";
 
-const UserContextProvider = ({ children, onReady }: PropsWithChildren<{onReady?: ()=> void}>) => {
+const UserContextProvider = ({ children }: PropsWithChildren) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [tokenInvalid, setTokenInvalid] = useState(false);
-
-  const token = getCookie("auth_token");
+  const getToken = getCookie("auth_token");
+  const [token, setToken] = useState<null | string>(getToken ?? null);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const fetchUser = async () => {
-    try {
-      const res = await fetch("/api/user", {
-        headers: {
-          Authorization: `Bearer ${decodeURIComponent(token ?? "")}`,
-        },
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setUser(data);
-      } else if (res.status === 401 || res.status === 403) {
-        setTokenInvalid(true); // now this is meaningful
+    setToken(getToken ?? null);
+    if (getToken) {
+      setLoading(true);
+      try {
+        const response = await api.get("/api/user");
+        setUser(response.data);
+      } catch {
         setUser(null);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error("Auth check failed", err);
-      setTokenInvalid(true);
-    } finally {
-      onReady?.();
-      setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (token) {
-      fetchUser();
-    } else {
-      setTokenInvalid(true); // no token = invalid
-      setIsLoading(false);
-      onReady?.();
-    }
-  }, [token]);
+  useLayoutEffect(() => {
+    fetchUser();
+  }, []);
 
   const logout = () => {
-    setTokenInvalid(true);
+    setToken(null);
     setUser(null);
-  }
-
-  const refreshUser = () => fetchUser();
+  };
 
   return (
-    <UserContext.Provider value={{ user, isLoading, tokenInvalid, logout, refreshUser }}>
+    <UserContext.Provider value={{ user, logout, token, fetchUser, loading }}>
       {children}
     </UserContext.Provider>
   );

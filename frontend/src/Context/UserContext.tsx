@@ -3,18 +3,18 @@ import type { User } from "../types";
 
 type AuthContextType = {
   user: User | null;
-  isLoading: boolean;
-  tokenInvalid: boolean;
   logout: () => void;
-  refreshUser: () => void;
+  fetchUser: () => void;
+  token: null | string;
+  loading: boolean;
 };
 
 const UserContext = createContext<AuthContextType>({
   user: null,
-  isLoading: true,
-  tokenInvalid: true,
-  logout: ()=> {},
-  refreshUser: ()=> {},
+  token: null,
+  logout: () => {},
+  fetchUser: () => {},
+  loading: true,
 });
 export default UserContext;
 

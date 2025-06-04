@@ -2,31 +2,30 @@ import { MoreVertical } from "feather-icons-react"
 import { useContext, useState } from "react";
 import UserContext from "../Context/UserContext";
 import Dropdown from "./DropDown";
-import { getCookie } from "../helper";
 import { useNavigate } from "react-router-dom";
 import { routes } from "../routes";
 import ErrorModal from "./ErrorModal";
+import api from "../api";
 
 const NavBar = () => {
-  const { user, logout, refreshUser } = useContext(UserContext);
+  const { user, logout, token } = useContext(UserContext);
   const navigate = useNavigate();
-  const token = getCookie("auth_token");
   const [error, setError] = useState<null | string>(null);
 
   const handleLogout = async () => {
-    const res = await fetch("/api/logout", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${decodeURIComponent(token ?? "")}`,
-      },
-    });
-
-    if (res.ok) {
-      logout();
-      refreshUser();
-      navigate(routes.welcome);
-    } else {
-      setError(res.statusText);
+    try {
+      if (token) {
+        await api.post("/api/logout");
+        navigate(routes.welcome);
+        logout();
+      }
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        logout();
+        navigate(routes.welcome);
+      } else {
+        setError("Logout failed: " + error.message);
+      }
     }
   };
 

@@ -3,8 +3,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "../../Components/Button";
 import { authRoutes, routes } from "../../routes";
 import { useForm } from "react-hook-form";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import ErrorModal from "../../Components/ErrorModal";
+import UserContext from "../../Context/UserContext";
+import api from "../../api";
 
 interface FormData {
   name: string;
@@ -14,7 +16,7 @@ interface FormData {
 
 const Register = () => {
   const [postError, setPostError] = useState<null | string>(null);
-
+  const { token, fetchUser } = useContext(UserContext);
   const navigate = useNavigate();
 
   const {
@@ -25,22 +27,27 @@ const Register = () => {
   } = useForm<FormData>();
 
   const onSubmit = async (data: FormData) => {
-    const res = await fetch("/api/register", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-
-    if (res.ok) {
+    if (token) {
       navigate(routes.dashboard);
-    } else if (res.status === 422) {
-      Object.entries(res.statusText).forEach((err) => {
-        setError(err[0] as keyof FormData, {
-          type: "manual",
-          message: err[1],
+      return;
+    }
+
+    try {
+      await api.post("/api/register", data);
+      navigate(routes.dashboard);
+    } catch (error: any) {
+      if (error.response.status === 422) {
+        Object.entries(error.response.data.errors).forEach((err) => {
+          setError(err[0] as keyof FormData, {
+            type: "manual",
+            message: err[1],
+          });
         });
-      });
-    } else {
-      setPostError(res.statusText);
+      } else {
+        setPostError(error.response.statusText);
+      }
+    } finally {
+      fetchUser();
     }
   };
 

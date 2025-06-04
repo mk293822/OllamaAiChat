@@ -1,8 +1,17 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { routes } from "../../routes";
-
+import { useContext, useEffect } from "react";
+import UserContext from "../../Context/UserContext";
 
 const Forbidden = () => {
+  const { token } = useContext(UserContext);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (token) {
+      navigate(routes.dashboard);
+    }
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-800 items-center justify-center text-center px-4">
