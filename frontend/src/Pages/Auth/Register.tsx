@@ -1,12 +1,11 @@
-import GuestLayout from "../../Layouts/GuestLayout";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "../../Components/Button";
 import { authRoutes, routes } from "../../routes";
 import { useForm } from "react-hook-form";
 import { useContext, useState } from "react";
 import ErrorModal from "../../Components/ErrorModal";
-import UserContext from "../../Context/UserContext";
 import api from "../../api";
+import { UserContext } from "../../Context/UserContext";
 
 interface FormData {
   name: string;
@@ -16,7 +15,8 @@ interface FormData {
 
 const Register = () => {
   const [postError, setPostError] = useState<null | string>(null);
-  const { token, fetchUser } = useContext(UserContext);
+  const { token, registered } = useContext(UserContext);
+
   const navigate = useNavigate();
 
   const {
@@ -34,6 +34,7 @@ const Register = () => {
 
     try {
       await api.post("/api/register", data);
+      registered();
       navigate(routes.dashboard);
     } catch (error: any) {
       if (error.response.status === 422) {
@@ -46,13 +47,11 @@ const Register = () => {
       } else {
         setPostError(error.response.statusText);
       }
-    } finally {
-      fetchUser();
     }
   };
 
   return (
-    <GuestLayout>
+    <>
       <div className="flex justify-center items-center h-screen">
         <div className="w-full max-w-md bg-gray-800 p-8 rounded-lg shadow-lg">
           <h2 className="text-2xl font-bold mb-6 text-center">Register</h2>
@@ -104,7 +103,7 @@ const Register = () => {
 
       {/* errir */}
       {postError && <ErrorModal message={postError} />}
-    </GuestLayout>
+    </>
   );
 };
 

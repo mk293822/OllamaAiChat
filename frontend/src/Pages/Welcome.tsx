@@ -1,12 +1,11 @@
 import { Button } from "../Components/Button";
-import GuestLayout from "../Layouts/GuestLayout";
 import WelcomeNavBar from "../Components/WelcomeNavBar";
 import { Link } from "react-router-dom";
 import { authRoutes } from "../routes";
 
 const Welcome = () => {
   return (
-    <GuestLayout>
+    <>
       <WelcomeNavBar />
       {/* Main Content */}
       <main className="flex-1 h-[calc(100vh-130px)] flex flex-col items-center justify-center px-4 text-center">
@@ -26,7 +25,7 @@ const Welcome = () => {
       <footer className="text-center text-sm p-4 text-gray-400">
         &copy; {new Date().getFullYear()} Gemma3 by Ollama. All rights reserved.
       </footer>
-    </GuestLayout>
+    </>
   );
 };
 

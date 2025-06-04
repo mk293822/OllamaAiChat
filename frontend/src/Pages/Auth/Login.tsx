@@ -1,12 +1,11 @@
 import { Button } from "../../Components/Button";
-import GuestLayout from "../../Layouts/GuestLayout";
 import { Link, useNavigate } from "react-router-dom";
 import { authRoutes, routes } from "../../routes";
 import { useForm } from "react-hook-form";
 import { useContext, useEffect, useState } from "react";
 import ErrorModal from "../../Components/ErrorModal";
-import UserContext from "../../Context/UserContext";
 import api from "../../api";
+import { UserContext } from "../../Context/UserContext";
 
 interface FormData {
   email: string;
@@ -16,8 +15,8 @@ interface FormData {
 const Login = () => {
   const [secondLeft, setSecondLeft] = useState<number | null>(null);
   const [postError, setPostError] = useState<null | string>(null);
-  const { token, fetchUser } = useContext(UserContext);
   const navigate = useNavigate();
+  const { token, registered } = useContext(UserContext);
 
   const {
     handleSubmit,
@@ -33,6 +32,7 @@ const Login = () => {
     }
     try {
       await api.post("/api/login", data);
+      registered();
       navigate(routes.dashboard);
     } catch (error: any) {
       if (error.response.status === 422) {
@@ -53,8 +53,6 @@ const Login = () => {
       } else {
         setPostError(error.response.statusText);
       }
-    } finally {
-      fetchUser();
     }
   };
 
@@ -83,7 +81,7 @@ const Login = () => {
   }, [secondLeft, setError]);
 
   return (
-    <GuestLayout>
+    <>
       <div className="flex justify-center items-center h-screen">
         <div className="w-full max-w-md bg-gray-800 p-8 rounded-lg shadow-lg">
           <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
@@ -126,7 +124,7 @@ const Login = () => {
 
       {/* error */}
       {postError && <ErrorModal message={postError} />}
-    </GuestLayout>
+    </>
   );
 };
 

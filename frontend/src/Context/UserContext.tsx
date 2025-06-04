@@ -3,18 +3,15 @@ import type { User } from "../types";
 
 type AuthContextType = {
   user: User | null;
-  logout: () => void;
-  fetchUser: () => void;
   token: null | string;
-  loading: boolean;
+  logout: () => void;
+  registered: () => void;
 };
 
-const UserContext = createContext<AuthContextType>({
+export const UserContext = createContext<AuthContextType>({
   user: null,
   token: null,
   logout: () => {},
-  fetchUser: () => {},
-  loading: true,
+  registered: () => {},
 });
-export default UserContext;
 

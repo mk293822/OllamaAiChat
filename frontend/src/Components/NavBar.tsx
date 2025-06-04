@@ -1,6 +1,6 @@
-import { MoreVertical } from "feather-icons-react"
+import { MoreVertical } from "feather-icons-react";
 import { useContext, useState } from "react";
-import UserContext from "../Context/UserContext";
+import { UserContext } from "../Context/UserContext";
 import Dropdown from "./DropDown";
 import { useNavigate } from "react-router-dom";
 import { routes } from "../routes";
@@ -8,7 +8,7 @@ import ErrorModal from "./ErrorModal";
 import api from "../api";
 
 const NavBar = () => {
-  const { user, logout, token } = useContext(UserContext);
+  const { user, token, logout } = useContext(UserContext);
   const navigate = useNavigate();
   const [error, setError] = useState<null | string>(null);
 
@@ -16,12 +16,11 @@ const NavBar = () => {
     try {
       if (token) {
         await api.post("/api/logout");
-        navigate(routes.welcome);
         logout();
+        navigate(routes.welcome);
       }
     } catch (error: any) {
       if (error.response?.status === 401) {
-        logout();
         navigate(routes.welcome);
       } else {
         setError("Logout failed: " + error.message);
@@ -62,4 +61,4 @@ const NavBar = () => {
   );
 };
 
-export default NavBar
+export default NavBar;

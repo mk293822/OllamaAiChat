@@ -2,12 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Conversation;
 use App\Services\ConversationService;
 use App\Services\OllamaService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 
 class ChatController extends Controller
 {
@@ -33,21 +31,16 @@ class ChatController extends Controller
         $prompt = $request->get('text', '');
 
         if (!$conversation_id || $conversation_id === "null") {
-            try {
-                $conversation = Conversation::create([
-                    'title' => 'Test Conversation',
-                    'user_id' => 1
-                ]);
-                $conversation_id = $conversation->id;
-            } catch (\Exception $e) {
-                Log::error('Conversation creation failed: ' . $e->getMessage());
-                return response()->json(['error' => 'Conversation creation failed'], 500);
-            }
+            $conversation_id = $this->conversationService->createCoversation(1)->id;
         }
 
-        Log::info('mes', ['mes' => $conversation_id]);
-
         // Call your OllamaService to get the streamed response
-        return $this->ollama->chat($prompt, $conversation_id);
+        return $this->ollama->chat($prompt, $conversation_id, $request);
+    }
+
+
+    public function getMessages(Request $request, $conversation_id)
+    {
+        return response()->json(['messages' => $this->ollama->getMessages($conversation_id, $request)]);
     }
 }

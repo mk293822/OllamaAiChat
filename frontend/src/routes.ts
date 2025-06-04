@@ -1,8 +1,8 @@
 // routes.ts
 export const routes = {
-  dashboard: "/dashboard",
-  chat: "/dashboard/c/:conversation_id",
-  welcome: "/",
+  welcome: "/welcome",
+  dashboard: "/",
+  chat: "/c/:conversation_id",
 };
 export const authRoutes = {
   login: "/login",

@@ -7,8 +7,8 @@ import "../index.css";
 
 interface Props {
   localResponses: Array<{
-    request: string;
-    response: string;
+    role: string;
+    content: string;
   }>;
 }
 
@@ -31,45 +31,49 @@ const OutputMessage = ({ localResponses }: Props) => {
           key={index}
           className="w-[55%] ps-6 mx-auto flex flex-col justify-start gap-4"
         >
-          <p className="bg-gray-700 max-w-sm rounded-2xl px-4 py-2 self-end me-12 mb-8">
-            {res.request}
-          </p>
-          <ReactMarkdown
-            components={{
-              code({ inline, className, children, ...props }) {
-                const match = /language-(\w+)/.exec(className ?? "");
+          {res.role === "user" && (
+            <p className="bg-gray-700 max-w-sm rounded-2xl px-4 py-2 self-end me-12 mb-8">
+              {res.content}
+            </p>
+          )}
+          {res.role === "assistant" && (
+            <ReactMarkdown
+              components={{
+                code({ inline, className, children, ...props }) {
+                  const match = /language-(\w+)/.exec(className ?? "");
 
-                if (!inline && match) {
+                  if (!inline && match) {
+                    return (
+                      <SyntaxHighlighter
+                        style={oneDark}
+                        language={match[1]}
+                        PreTag="div"
+                        {...props}
+                      >
+                        {String(children).replace(/\n$/, "")}
+                      </SyntaxHighlighter>
+                    );
+                  }
+
+                  // Inline code styling
                   return (
-                    <SyntaxHighlighter
-                      style={oneDark}
-                      language={match[1]}
-                      PreTag="div"
+                    <code
+                      className={clsx(
+                        "bg-gray-200 dark:bg-gray-700 text-sm px-1 py-1 rounded",
+                        "font-mono text-red-500",
+                        "leading-loose"
+                      )}
                       {...props}
                     >
-                      {String(children).replace(/\n$/, "")}
-                    </SyntaxHighlighter>
+                      {children}
+                    </code>
                   );
-                }
-
-                // Inline code styling
-                return (
-                  <code
-                    className={clsx(
-                      "bg-gray-200 dark:bg-gray-700 text-sm px-1 py-1 rounded",
-                      "font-mono text-red-500",
-                      "leading-loose"
-                    )}
-                    {...props}
-                  >
-                    {children}
-                  </code>
-                );
-              },
-            }}
-          >
-            {res.response}
-          </ReactMarkdown>
+                },
+              }}
+            >
+              {res.content}
+            </ReactMarkdown>
+          )}
         </div>
       ))}
       <div ref={messagesEndRef} />

@@ -1,10 +1,11 @@
 import { Link, useNavigate } from "react-router-dom";
 import { routes } from "../../routes";
 import { useContext, useEffect } from "react";
-import UserContext from "../../Context/UserContext";
+import { UserContext } from "../../Context/UserContext";
 
 const Forbidden = () => {
   const { token } = useContext(UserContext);
+
   const navigate = useNavigate();
 
   useEffect(() => {

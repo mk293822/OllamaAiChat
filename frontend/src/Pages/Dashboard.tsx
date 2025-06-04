@@ -1,19 +1,19 @@
 import { useContext, useEffect, useRef, useState } from "react";
-import AuthenticatedLayout from "../Layouts/AuthenticatedLayout";
 import InputForm from "../Components/InputForm";
 import OutputMessage from "../Components/OutputMessage";
 import ErrorModal from "../Components/ErrorModal";
 import { useNavigate, useParams } from "react-router-dom";
 import { authRoutes } from "../routes";
-import UserContext from "../Context/UserContext";
+import api from "../api";
+import { UserContext } from "../Context/UserContext";
 
 interface StreamResponse {
   body: ReadableStream<Uint8Array> | null;
 }
 
 interface LocalResponse {
-  request: string;
-  response: string;
+  role: string;
+  content: string;
 }
 
 const Dashboard = () => {
@@ -35,6 +35,18 @@ const Dashboard = () => {
     }
   }, [conversation_id]);
 
+  // Get the messages of the conversation
+  useEffect(() => {
+    const getMessages = async () => {
+      if (conversationId) {
+        const response = await api.get(`/api/getMessages/${conversationId}`);
+        setLocalResponses(response.data.messages);
+      }
+    };
+    getMessages();
+  }, [conversationId]);
+
+  // Handle the submittion of the chat
   const handleSubmit = async (text: string) => {
     setLoading(true);
     if (controllerRef.current) {
@@ -44,6 +56,11 @@ const Dashboard = () => {
     const controller = new AbortController();
     controllerRef.current = controller;
 
+    setLocalResponses((prev) => [...prev, { role: "user", content: text }]);
+    setLocalResponses((prev) => [
+      ...prev,
+      { role: "assistant", content: "..." },
+    ]);
     try {
       const res = await fetch(`/api/ask/${conversationId}`, {
         method: "POST",
@@ -55,15 +72,14 @@ const Dashboard = () => {
         signal: controllerRef.current.signal,
       });
 
-      // get conversation id if current path is /dashboard and go to /dashboard/c/conversation_id(uuid)
       const newConversationId = res.headers.get("X-Convo-Id");
       if (!conversationId && newConversationId) {
         setConversationId(newConversationId);
-        navigate(`/dashboard/c/${newConversationId}`, { replace: true });
+        await navigate(`/c/${newConversationId}`, { replace: true });
       }
-      // Stream resonse
-      setLocalResponses((prev) => [...prev, { request: text, response: "." }]);
+
       await handleStreamResponse(res);
+      // Stream resonse
     } catch (error: any) {
       if (error.response.status === 401) {
         navigate(authRoutes.login);
@@ -74,8 +90,6 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
-
-    // Now send streaming fetch request
   };
 
   // Handle the Stream Response form form
@@ -97,14 +111,14 @@ const Dashboard = () => {
         const chunk: string = decoder.decode(value, { stream: true });
 
         for (const char of chunk) {
-          await new Promise<void>((resolve) => setTimeout(resolve, 30)); // typing speed
+          await new Promise<void>((resolve) => setTimeout(resolve, 10)); // typing speed
 
           currentText += char;
 
           // Update state with new array (live typing)
           setLocalResponses((prev: LocalResponse[]) => {
             const updated = [...prev];
-            updated[updated.length - 1].response = currentText; // update last message
+            updated[updated.length - 1].content = currentText; // update last message
             return updated;
           });
         }
@@ -122,8 +136,8 @@ const Dashboard = () => {
   };
 
   return (
-    <AuthenticatedLayout>
-      <div className="flex flex-col min-h-[calc(100vh-3.5rem)] bg-white dark:bg-gray-800">
+    <>
+      <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-white dark:bg-gray-800">
         {/* Chat Container */}
         <OutputMessage localResponses={localResponses} />
 
@@ -143,7 +157,7 @@ const Dashboard = () => {
 
       {/* Error */}
       {error && <ErrorModal message={error} />}
-    </AuthenticatedLayout>
+    </>
   );
 };
 

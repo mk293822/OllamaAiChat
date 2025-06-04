@@ -1,43 +1,57 @@
-import { useLayoutEffect, useState, type PropsWithChildren } from "react";
+import {
+  useLayoutEffect,
+  useState,
+  type PropsWithChildren,
+  useMemo,
+} from "react";
 import type { User } from "../types";
-import UserContext from "./UserContext";
 import api from "../api";
 import { getCookie } from "../helper";
+import { useCallback } from "react";
+import { UserContext } from "./UserContext";
 
 const UserContextProvider = ({ children }: PropsWithChildren) => {
   const [user, setUser] = useState<User | null>(null);
-  const getToken = getCookie("auth_token");
-  const [token, setToken] = useState<null | string>(getToken ?? null);
-  const [loading, setLoading] = useState<boolean>(false);
+  const getToken = getCookie("auth_token") ?? null;
+  const [token, setToken] = useState<string | null>(getToken);
 
-  const fetchUser = async () => {
-    setToken(getToken ?? null);
-    if (getToken) {
-      setLoading(true);
+  const fetchUser = useCallback(async () => {
+    if (token) {
       try {
         const response = await api.get("/api/user");
         setUser(response.data);
       } catch {
         setUser(null);
-      } finally {
-        setLoading(false);
       }
     }
-  };
+  }, [token]);
 
   useLayoutEffect(() => {
     fetchUser();
-  }, []);
+  }, [fetchUser]);
 
   const logout = () => {
     setToken(null);
     setUser(null);
-  };
+  }
+
+  const registered = () => {
+    setToken(getToken);
+    fetchUser();
+  }
+
+  const contextValue = useMemo(
+    () => ({
+      user,
+      token,
+      logout,
+      registered
+    }),
+    [user, token]
+  );
 
   return (
-    <UserContext.Provider value={{ user, logout, token, fetchUser, loading }}>
-      {children}
-    </UserContext.Provider>
+    <UserContext.Provider value={contextValue}>{children}</UserContext.Provider>
   );
 };
 
