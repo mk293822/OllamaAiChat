@@ -2,8 +2,8 @@ import clsx from "clsx";
 import { useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { oneDark } from "react-syntax-highlighter/dist/styles";
 import "../index.css";
+import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 interface Props {
   localResponses: Array<{
@@ -39,13 +39,13 @@ const OutputMessage = ({ localResponses }: Props) => {
           {res.role === "assistant" && (
             <ReactMarkdown
               components={{
-                code({ inline, className, children, ...props }) {
+                code({className, children, ...props }) {
                   const match = /language-(\w+)/.exec(className ?? "");
 
-                  if (!inline && match) {
+                  if (match) {
                     return (
                       <SyntaxHighlighter
-                        style={oneDark}
+                        style={atomDark}
                         language={match[1]}
                         PreTag="div"
                         {...props}
@@ -59,8 +59,8 @@ const OutputMessage = ({ localResponses }: Props) => {
                   return (
                     <code
                       className={clsx(
-                        "bg-gray-200 dark:bg-gray-700 text-sm px-1 py-1 rounded",
-                        "font-mono text-red-500",
+                        "bg-gray-700 text-sm px-1 py-1 rounded",
+                        "font-bold text-gray-300",
                         "leading-loose"
                       )}
                       {...props}
