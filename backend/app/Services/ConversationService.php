@@ -16,17 +16,7 @@ class ConversationService
         try {
             // Store the conversation with the generated title
             $words = explode(' ', $prompt);
-            $title = '';
-            $letterCount = 0;
-
-            foreach ($words as $word) {
-                $remaining = 10 - $letterCount;
-                if ($remaining <= 0) break;
-
-                $slice = mb_substr($word, 0, $remaining);
-                $title .= ' ' . $slice;
-                $letterCount += mb_strlen($slice);
-            }
+            $title = implode(' ', array_slice($words, 0, 10));
 
             return Conversation::create([
                 'title' => $title,

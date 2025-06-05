@@ -13,48 +13,19 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class OllamaService
 {
 
+    protected $messageService;
+
+    public function __construct(MessageService $message)
+    {
+        $this->messageService = $message;
+    }
+
     public function chat($prompt, $conversation_id, $request)
     {
+        ignore_user_abort(true);
         try {
             return new StreamedResponse(function () use ($prompt, $conversation_id, $request) {
-                $this->createMessage($conversation_id, MessageRoleEnum::User, $prompt);
-                $messages = $this->getMessages($conversation_id, $request);
-
-                $serviceResponse = Http::withHeaders([
-                    'Content-Type' => 'application/json',
-                ])->withOptions([
-                    'stream' => true,
-                ])->post('http://localhost:11434/api/chat', [
-                    'model' => env('OLLAMA_MODAL'),
-                    'messages' => $messages,
-                    'stream' => true,
-                ]);
-
-                $body = $serviceResponse->getBody();
-                $assistantReply = '';
-
-                while (!$body->eof()) {
-                    $chunk = $body->read(512);
-
-                    foreach (explode("\n", $chunk) as $line) {
-                        $line = trim($line);
-                        if (!$line) continue;
-
-                        $json = json_decode($line, true);
-
-                        if (isset($json['message']['content'])) {
-                            $content = $json['message']['content'];
-                            $assistantReply .= $content;
-
-                            echo $content;
-                            ob_flush();
-                            flush();
-                        }
-                    }
-                }
-
-                // Save the complete assistant message once at the end
-                $this->createMessage($conversation_id, MessageRoleEnum::Assistant, $assistantReply);
+                $this->handleChatStream($prompt, $conversation_id, $request);
             }, 200, [
                 'Content-Type' => 'text/event-stream',
                 'X-Convo-Id'   => $conversation_id,
@@ -65,38 +36,69 @@ class OllamaService
         }
     }
 
-    public function getMessages($conversation_id, $request)
+    private function handleChatStream($prompt, $conversation_id, $request)
     {
-        try {
-            $conversation = Conversation::findOrFail($conversation_id);
+        if (connection_aborted()) return;
 
-            if ($conversation) {
-                return MessageResource::collection($conversation->messages)->toArray($request);
-            }
-            return [];
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
+        // Create user message
+        $this->messageService->createMessage($conversation_id, MessageRoleEnum::User, $prompt);
+
+        // Fetch messages to send to Ollama
+        $messages = $this->messageService->getMessages($conversation_id, $request);
+
+        // Send to Ollama
+        $serviceResponse = $this->sendChatRequest($messages);
+
+        // Stream assistant response
+        $assistantReply = $this->streamAssistantReply($serviceResponse, $conversation_id);
+
+        // Save assistant response
+        $this->messageService->createMessage($conversation_id, MessageRoleEnum::Assistant, $assistantReply);
     }
 
 
-    protected function createMessage($conversation_id, $role, $content)
+    private function sendChatRequest($messages)
     {
-        try {
-            DB::beginTransaction();
+        return Http::withHeaders([
+            'Content-Type' => 'application/json',
+        ])->withOptions([
+            'stream' => true,
+        ])->post('http://localhost:11434/api/chat', [
+            'model' => env('OLLAMA_MODAL'),
+            'messages' => $messages,
+            'stream' => true,
+        ]);
+    }
 
-            if ($conversation_id) {
-                Message::create([
-                    'conversation_id' => $conversation_id,
-                    'role' => $role,
-                    'content' => $content
-                ]);
+    private function streamAssistantReply($serviceResponse, $conversation_id)
+    {
+        $body = $serviceResponse->getBody();
+        $assistantReply = '';
+
+        while (!$body->eof()) {
+            if (connection_aborted()) {
+                break;
             }
 
-            DB::commit();
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['error' => $e->getMessage()], 500);
+            $chunk = $body->read(512);
+
+            foreach (explode("\n", $chunk) as $line) {
+                $line = trim($line);
+                if (!$line) continue;
+
+                $json = json_decode($line, true);
+
+                if (isset($json['message']['content'])) {
+                    $content = $json['message']['content'];
+                    $assistantReply .= $content;
+
+                    echo $content;
+                    ob_flush();
+                    flush();
+                }
+            }
         }
+
+        return $assistantReply;
     }
 }

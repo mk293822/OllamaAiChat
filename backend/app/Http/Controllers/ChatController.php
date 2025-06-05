@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\ConversationResource;
 use App\Models\Conversation;
 use App\Services\ConversationService;
+use App\Services\MessageService;
 use App\Services\OllamaService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,11 +15,13 @@ class ChatController extends Controller
 {
     protected $ollama;
     protected $conversationService;
+    protected $messageService;
 
-    public function __construct(OllamaService $ollama, ConversationService $conversation)
+    public function __construct(OllamaService $ollama, ConversationService $conversation, MessageService $message)
     {
         $this->ollama = $ollama;
         $this->conversationService = $conversation;
+        $this->messageService = $message;
     }
 
     public function ask(Request $request, string|null $conversation_id)
@@ -49,7 +52,7 @@ class ChatController extends Controller
         return response()->json([
             'conversations' => $conversations,
             'messages' => (is_string($conversation_id) && $conversation_id !== "" && $conversation_id !== "null")
-                ? $this->ollama->getMessages($conversation_id, $request)
+                ? $this->messageService->getMessages($conversation_id, $request)
                 : null,
         ]);
     }
