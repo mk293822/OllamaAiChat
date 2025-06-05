@@ -12,6 +12,8 @@ export type AuthContextType = {
   isOpenedSideBar: boolean;
   setIsOpenedSideBar: Dispatch<SetStateAction<boolean>>;
   error: string | null;
-  handleDeleteConversation: (conversationId: string| null) => void;
+  handleDeleteConversation: (conversationId: string | null) => void;
   deletedConversationIds: (string | undefined)[];
+  showSearchModal: boolean;
+  setShowSearchModal: Dispatch<SetStateAction<boolean>>;
 };

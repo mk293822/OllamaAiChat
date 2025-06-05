@@ -3,10 +3,6 @@
 namespace App\Services;
 
 use App\Enums\MessageRoleEnum;
-use App\Http\Resources\MessageResource;
-use App\Models\Conversation;
-use App\Models\Message;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 

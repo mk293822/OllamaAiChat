@@ -15,6 +15,8 @@ const AuthenticatedContextProvider = ({ children }: PropsWithChildren) => {
     >([]);
   const [error, setError] = useState<string | null>(null);
   const { token } = useContext(UserContext);
+    const [showSearchModal, setShowSearchModal] = useState<boolean>(false);
+  
 
 
   // Delete Conversation
@@ -38,6 +40,8 @@ const AuthenticatedContextProvider = ({ children }: PropsWithChildren) => {
       error,
       handleDeleteConversation,
       deletedConversationIds,
+      showSearchModal,
+      setShowSearchModal,
     }),
     [
       isOpenedSideBar,
@@ -45,6 +49,8 @@ const AuthenticatedContextProvider = ({ children }: PropsWithChildren) => {
       error,
       handleDeleteConversation,
       deletedConversationIds,
+      showSearchModal,
+      setShowSearchModal,
     ]
   );
   return (

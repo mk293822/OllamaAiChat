@@ -64,7 +64,7 @@ const Chats = ({
                     {conversations.map((conversation) => (
                       <div
                         key={conversation.id}
-                        className="relative group cursor-pointer hover:bg-gray-700 rounded-xl"
+                        className="relative group cursor-pointer hover:bg-gray-600 rounded-xl"
                       >
                         <Link
                           to={`/c/${conversation.id}`}
@@ -76,7 +76,7 @@ const Chats = ({
                         <Dropdown>
                           <Dropdown.Trigger>
                             <button className="absolute right-1 -top-5 -translate-y-2 hidden group-hover:block text-gray-200">
-                              <MoreVertical className="w-6 h-6 cursor-pointer hover:bg-gray-600 rounded-full p-1" />
+                              <MoreVertical className="w-6 h-6 cursor-pointer hover:bg-gray-500 rounded-full p-1" />
                             </button>
                           </Dropdown.Trigger>
 

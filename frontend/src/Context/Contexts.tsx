@@ -14,4 +14,6 @@ export const AuthenticatedContext = createContext<AuthContextType>({
   error: null,
   handleDeleteConversation: () => {},
   deletedConversationIds: [],
+  showSearchModal: false,
+  setShowSearchModal: () => {},
 });
