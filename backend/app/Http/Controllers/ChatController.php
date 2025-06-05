@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\ConversationResource;
+use App\Models\Conversation;
 use App\Services\ConversationService;
 use App\Services\OllamaService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class ChatController extends Controller
 {
@@ -31,7 +34,7 @@ class ChatController extends Controller
         $prompt = $request->get('text', '');
 
         if (!$conversation_id || $conversation_id === "null") {
-            $conversation_id = $this->conversationService->createCoversation(1)->id;
+            $conversation_id = $this->conversationService->createConversation($request->user()->id, $prompt)->id;
         }
 
         // Call your OllamaService to get the streamed response
@@ -39,8 +42,22 @@ class ChatController extends Controller
     }
 
 
-    public function getMessages(Request $request, $conversation_id)
+    public function getMessages(Request $request, $conversation_id = null)
     {
-        return response()->json(['messages' => $this->ollama->getMessages($conversation_id, $request)]);
+        $conversations = $this->conversationService->getConversationsByDate($request);
+
+        return response()->json([
+            'conversations' => $conversations,
+            'messages' => (is_string($conversation_id) && $conversation_id !== "" && $conversation_id !== "null")
+                ? $this->ollama->getMessages($conversation_id, $request)
+                : null,
+        ]);
+    }
+
+    public function deleteConversation($conversation_id)
+    {
+        $this->conversationService->deleteConversation($conversation_id);
+
+        return response()->json(['success' => 'Conversation Deleted Successfully']);
     }
 }

@@ -8,11 +8,11 @@ use App\Models\Conversation;
 use App\Models\Message;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class OllamaService
 {
+
     public function chat($prompt, $conversation_id, $request)
     {
         try {

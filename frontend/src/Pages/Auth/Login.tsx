@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { useContext, useEffect, useState } from "react";
 import ErrorModal from "../../Components/ErrorModal";
 import api from "../../api";
-import { UserContext } from "../../Context/UserContext";
+import { UserContext } from "../../Context/Contexts";
 
 interface FormData {
   email: string;

@@ -2,30 +2,31 @@
 
 namespace App\Services;
 
+use App\Http\Resources\ConversationResource;
 use App\Models\Conversation;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ConversationService
 {
 
-    public function createCoversation($id, string $prompt = "")
+    public function createConversation($id, $prompt)
     {
         try {
-            // set the titile accroing to user's first prompt content with ollama
-            $titleResponse = Http::withHeaders([
-                'Content-Type' => 'application/json',
-            ])->post('http://localhost:11434/api/chat', [
-                'model' => 'gemma3:1b',
-                'messages' => [
-                    ['role' => 'user', 'content' => "Give a short title for this prompt: '$prompt'"]
-                ],
-                'stream' => false,
-            ]);
+            // Store the conversation with the generated title
+            $words = explode(' ', $prompt);
+            $title = '';
+            $letterCount = 0;
 
-            // 🔹 Extract the title
-            $ollamaResponse = $titleResponse->json();
-            $title = $ollamaResponse['message']['content'] ?? 'New Conversation';
+            foreach ($words as $word) {
+                $remaining = 10 - $letterCount;
+                if ($remaining <= 0) break;
+
+                $slice = mb_substr($word, 0, $remaining);
+                $title .= ' ' . $slice;
+                $letterCount += mb_strlen($slice);
+            }
 
             return Conversation::create([
                 'title' => $title,
@@ -34,6 +35,54 @@ class ConversationService
         } catch (\Exception $e) {
             Log::error('Conversation creation failed: ' . $e->getMessage());
             return response()->json(['error' => 'Conversation creation failed'], 500);
+        }
+    }
+
+    public function getConversationsByDate($request)
+    {
+        $conversations = Conversation::orderByDesc('created_at')->get();
+
+        $grouped = $conversations->groupBy(function ($conversation) {
+            $date = Carbon::parse($conversation->at);
+            $group = null;
+
+            if ($date->isToday()) {
+                $group = 'Today';
+            } elseif ($date->isYesterday()) {
+                $group = 'Yesterday';
+            } elseif ($date->greaterThanOrEqualTo(Carbon::now()->subDays(7))) {
+                $group = 'Previous 7 Days';
+            } else {
+                $group = 'Older';
+            }
+
+            return $group;
+        });
+        $result = [];
+
+        foreach ($grouped as $group => $items) {
+            $result[$group] = ConversationResource::collection($items)->toArray($request);
+        }
+
+        return $result;
+    }
+
+    public function deleteConversation($id)
+    {
+        $conversation = Conversation::findOrFail($id);
+
+        try {
+            DB::beginTransaction();
+
+            $conversation->messages()->delete();
+
+            $conversation->delete();
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Conversation deletion failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Conversation deletion failed'], 500);
         }
     }
 }

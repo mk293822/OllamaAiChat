@@ -4,6 +4,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import "./index.css";
 import paths from "./paths";
 import UserContextProvider from "./Context/UserContextProvider";
+import AuthenticatedContextProvider from "./Context/AuthenticatedContextProvider";
 
 
 const router = createBrowserRouter(paths);
@@ -11,7 +12,9 @@ const router = createBrowserRouter(paths);
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <UserContextProvider>
-      <RouterProvider router={router} />
+      <AuthenticatedContextProvider>
+        <RouterProvider router={router} />
+      </AuthenticatedContextProvider>
     </UserContextProvider>
   </StrictMode>
 );

@@ -2,10 +2,9 @@ import { useContext, useEffect, useRef, useState } from "react";
 import InputForm from "../Components/InputForm";
 import OutputMessage from "../Components/OutputMessage";
 import ErrorModal from "../Components/ErrorModal";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import { authRoutes } from "../routes";
-import api from "../api";
-import { UserContext } from "../Context/UserContext";
+import { UserContext } from "../Context/Contexts";
 
 interface StreamResponse {
   body: ReadableStream<Uint8Array> | null;
@@ -17,34 +16,22 @@ interface LocalResponse {
 }
 
 const Dashboard = () => {
+  const { localMessages, conversationId } = useOutletContext<{
+    localMessages: LocalResponse[];
+    conversationId: string;
+  }>();
   const [loading, setLoading] = useState(false);
   const [localResponses, setLocalResponses] = useState<LocalResponse[]>([]);
   const controllerRef = useRef<AbortController | null>(null);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { token } = useContext(UserContext);
-  const [conversationId, setConversationId] = useState<string | null>(null);
-  const { conversation_id } = useParams();
 
-  // get the conversation from the route
-  useEffect(() => {
-    if (conversation_id) {
-      setConversationId(conversation_id);
-    } else {
-      setConversationId(null);
-    }
-  }, [conversation_id]);
-
-  // Get the messages of the conversation
-  useEffect(() => {
-    const getMessages = async () => {
-      if (conversationId) {
-        const response = await api.get(`/api/getMessages/${conversationId}`);
-        setLocalResponses(response.data.messages);
-      }
-    };
-    getMessages();
-  }, [conversationId]);
+  // Set the messages
+  useEffect(
+    () => localMessages && setLocalResponses(localMessages),
+    [localMessages]
+  );
 
   // Handle the submittion of the chat
   const handleSubmit = async (text: string) => {
@@ -62,7 +49,7 @@ const Dashboard = () => {
       { role: "assistant", content: "..." },
     ]);
     try {
-      const res = await fetch(`/api/ask/${conversationId}`, {
+      const res = await fetch(`/api/ask/${conversationId ?? null}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -74,7 +61,6 @@ const Dashboard = () => {
 
       const newConversationId = res.headers.get("X-Convo-Id");
       if (!conversationId && newConversationId) {
-        setConversationId(newConversationId);
         await navigate(`/c/${newConversationId}`, { replace: true });
       }
 

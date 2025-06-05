@@ -49,7 +49,7 @@ const InputForm = ({ loading, handleSubmit, stopContent }: Props) => {
   };
 
   return (
-    <div className="w-[50%] mx-auto pb-4 flex gap-2 bg-transparent">
+    <div className="lg:w-[55%] w-[65%] md:w-[75%] mx-auto pb-4 flex gap-2 bg-transparent">
       <div
         ref={inputRef}
         contentEditable

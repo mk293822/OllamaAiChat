@@ -51,12 +51,12 @@ const Trigger = ({ children }: PropsWithChildren) => {
 
 const Content = ({
   align = "right",
-  width = "48",
-  contentClasses = "py-1 bg-white dark:bg-gray-600",
+  width = "40",
+  contentClasses = "py-2 bg-gray-600",
   children,
 }: PropsWithChildren<{
   align?: "left" | "right";
-  width?: "48";
+  width?: "40";
   contentClasses?: string;
 }>) => {
   const { open, setOpen } = useContext(DropDownContext);
@@ -71,8 +71,8 @@ const Content = ({
 
   let widthClasses = "";
 
-  if (width === "48") {
-    widthClasses = "w-48";
+  if (width === "40") {
+    widthClasses = "w-40";
   }
 
   return (
@@ -90,11 +90,7 @@ const Content = ({
           className={`absolute z-50 mt-2 rounded-md shadow-lg ${alignmentClasses} ${widthClasses}`}
           onClick={() => setOpen(false)}
         >
-          <div
-            className={
-              `rounded-md ` + contentClasses
-            }
-          >
+          <div className={`rounded-md px-2 rounded-lg ` + contentClasses}>
             {children}
           </div>
         </div>
@@ -114,7 +110,7 @@ const Button = ({
       {...props}
       type={type}
       className={
-        "block w-full px-4 py-2 text-start text-sm leading-5 text-gray-700 transition duration-150 ease-in-out hover:bg-gray-100 focus:bg-gray-100 focus:outline-none dark:text-gray-300 dark:hover:bg-gray-800 dark:focus:bg-gray-800 " +
+        "block w-full ps-2 py-1 rounded-lg text-start text-xs leading-5 text-gray-300 transition duration-150 ease-in-out hover:bg-gray-500 focus:bg-gray-500 " +
         className
       }
     >

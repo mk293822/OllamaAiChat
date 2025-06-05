@@ -29,7 +29,7 @@ const OutputMessage = ({ localResponses }: Props) => {
       {localResponses?.map((res, index) => (
         <div
           key={index}
-          className="w-[55%] ps-6 mx-auto flex flex-col justify-start gap-4"
+          className="lg:w-[60%] w-[70%] md:w-[80%] ps-6 mx-auto flex flex-col justify-start gap-4"
         >
           {res.role === "user" && (
             <p className="bg-gray-700 max-w-sm rounded-2xl px-4 py-2 self-end me-12 mb-8">
@@ -39,7 +39,7 @@ const OutputMessage = ({ localResponses }: Props) => {
           {res.role === "assistant" && (
             <ReactMarkdown
               components={{
-                code({className, children, ...props }) {
+                code({ className, children, ...props }) {
                   const match = /language-(\w+)/.exec(className ?? "");
 
                   if (match) {

@@ -3,7 +3,7 @@ import { Navigate } from "react-router-dom";
 import AuthenticatedLayout from "./Layouts/AuthenticatedLayout.tsx";
 import GuestLayout from "./Layouts/GuestLayout.tsx";
 import { routes } from "./routes.ts";
-import { UserContext } from "./Context/UserContext.tsx";
+import { UserContext } from "./Context/Contexts.tsx";
 
 
 export const RequireAuth = ({ children }: { children: JSX.Element }) => {

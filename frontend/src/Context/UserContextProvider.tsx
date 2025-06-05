@@ -8,7 +8,7 @@ import type { User } from "../types";
 import api from "../api";
 import { getCookie } from "../helper";
 import { useCallback } from "react";
-import { UserContext } from "./UserContext";
+import { UserContext } from "./Contexts";
 
 const UserContextProvider = ({ children }: PropsWithChildren) => {
   const [user, setUser] = useState<User | null>(null);
@@ -30,24 +30,24 @@ const UserContextProvider = ({ children }: PropsWithChildren) => {
     fetchUser();
   }, [fetchUser]);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setToken(null);
     setUser(null);
-  }
+  }, []);
 
-  const registered = () => {
+  const registered = useCallback(() => {
     setToken(getToken);
     fetchUser();
-  }
+  }, [getToken, fetchUser]);
 
   const contextValue = useMemo(
     () => ({
       user,
       token,
       logout,
-      registered
+      registered,
     }),
-    [user, token]
+    [user, token, logout, registered]
   );
 
   return (

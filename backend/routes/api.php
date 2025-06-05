@@ -12,6 +12,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     Route::post('/ask/{conversation_id}', [ChatController::class, 'ask']);
+    Route::post('/destory/{conversation_id}', [ChatController::class, 'deleteConversation']);
     Route::get('/getMessages/{conversation_id}', [ChatController::class, 'getMessages']);
 
     Route::post('/logout', [RegisterUserController::class, 'logout']);
