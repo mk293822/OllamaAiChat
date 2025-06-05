@@ -10,9 +10,11 @@ import SearchModal from "./SearchModal";
 const SideBar = ({
   conversations,
   conversation_id,
+  handleArchive,
 }: {
   conversations: GroupedConversation | undefined;
   conversation_id: string | null;
+  handleArchive: (id: string | null) => void;
 }) => {
   const { setIsOpenedSideBar, showSearchModal, setShowSearchModal } =
     useContext(AuthenticatedContext);
@@ -47,6 +49,7 @@ const SideBar = ({
           </button>
           {/* Chat Items */}
           <Chats
+            handleArchive={handleArchive}
             conversations={conversations}
             conversation_id={conversation_id}
           />
@@ -56,7 +59,7 @@ const SideBar = ({
       <SearchModal
         show={showSearchModal}
         conversation_id={conversation_id ?? null}
-        conversations={conversations}
+        groupedConversations={conversations}
         setShowSearchModal={() => setShowSearchModal(!showSearchModal)}
       />
     </>

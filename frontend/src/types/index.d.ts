@@ -7,6 +7,7 @@ export type Conversation = {
   title: string;
   id: string;
   at: string;
+  archived: boolean;
 };
 
 export type GroupedConversation = {

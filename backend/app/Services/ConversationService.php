@@ -30,7 +30,7 @@ class ConversationService
 
     public function getConversationsByDate($request)
     {
-        $conversations = Conversation::orderByDesc('created_at')->get();
+        $conversations = Conversation::where('archived', false)->orderByDesc('created_at')->get();
 
         $grouped = $conversations->groupBy(function ($conversation) {
             $date = Carbon::parse($conversation->at);

@@ -1,4 +1,4 @@
-import { MoreVertical, Trash2 } from "feather-icons-react";
+import { Archive, MoreVertical, Trash2 } from "feather-icons-react";
 import { Link, useNavigate } from "react-router-dom";
 import type { GroupedConversation } from "../types";
 import { useContext, useEffect, useState } from "react";
@@ -9,9 +9,13 @@ import Dropdown from "./DropDown";
 const Chats = ({
   conversations,
   conversation_id,
+  setShowSearchModal,
+  handleArchive,
 }: {
   conversations: GroupedConversation | undefined;
   conversation_id: string | null;
+  setShowSearchModal?: () => void;
+  handleArchive: (id: string | null) => void;
 }) => {
   const [groupedConversations, setGroupedConversations] = useState<
     GroupedConversation | undefined
@@ -68,6 +72,7 @@ const Chats = ({
                       >
                         <Link
                           to={`/c/${conversation.id}`}
+                          onClick={setShowSearchModal}
                           className="block max-w-[100%] overflow-hidden text-ellipsis p-2 z-10 whitespace-nowrap group-hover:mr-6"
                         >
                           {conversation.title}
@@ -87,6 +92,14 @@ const Chats = ({
                               <div className="flex gap-2 justify-start text-red-300 items-center">
                                 <Trash2 size={15} />
                                 Delete
+                              </div>
+                            </Dropdown.Button>
+                            <Dropdown.Button
+                              onClick={() => handleArchive(conversation.id)}
+                            >
+                              <div className="flex gap-2 justify-start items-center">
+                                <Archive size={15} />
+                                Archived
                               </div>
                             </Dropdown.Button>
                           </Dropdown.Content>

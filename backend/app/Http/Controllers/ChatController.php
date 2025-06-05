@@ -63,4 +63,14 @@ class ChatController extends Controller
 
         return response()->json(['success' => 'Conversation Deleted Successfully']);
     }
+
+    public function archiveConversation($conversation_id)
+    {
+        $conversation = Conversation::findOrFail($conversation_id);
+
+        $conversation->archived = !$conversation->archived;
+        $conversation->save();
+
+        return response()->json(['conversation' => $conversation]);
+    }
 }

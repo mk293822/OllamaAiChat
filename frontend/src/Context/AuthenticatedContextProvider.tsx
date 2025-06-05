@@ -12,26 +12,27 @@ const AuthenticatedContextProvider = ({ children }: PropsWithChildren) => {
   const [isOpenedSideBar, setIsOpenedSideBar] = useState(true);
   const [deletedConversationIds, setDeletedConversationIds] = useState<
     (string | undefined)[]
-    >([]);
+  >([]);
   const [error, setError] = useState<string | null>(null);
   const { token } = useContext(UserContext);
-    const [showSearchModal, setShowSearchModal] = useState<boolean>(false);
-  
-
+  const [showSearchModal, setShowSearchModal] = useState<boolean>(false);
 
   // Delete Conversation
-  const handleDeleteConversation = useCallback(async (conversationId: string| null) => {
-    try {
-      if (token && conversationId) {
-        await api.post(`/api/destory/${conversationId}`);
-        setDeletedConversationIds((pre) => [...pre, conversationId]);
-      } else {
-        setError(`Conversation id is ${conversationId}`);
+  const handleDeleteConversation = useCallback(
+    async (conversationId: string | null) => {
+      try {
+        if (token && conversationId) {
+          await api.post(`/api/destory/${conversationId}`);
+          setDeletedConversationIds((pre) => [...pre, conversationId]);
+        } else {
+          setError(`Conversation id is ${conversationId}`);
+        }
+      } catch (error: any) {
+        setError("Conversation deletion failed: " + error.message);
       }
-    } catch (error: any) {
-      setError("Conversation deletion failed: " + error.message);
-    }
-  }, [token]);
+    },
+    [token]
+  );
 
   const contextValue = useMemo(
     () => ({
@@ -53,6 +54,7 @@ const AuthenticatedContextProvider = ({ children }: PropsWithChildren) => {
       setShowSearchModal,
     ]
   );
+
   return (
     <AuthenticatedContext.Provider value={contextValue}>
       {children}

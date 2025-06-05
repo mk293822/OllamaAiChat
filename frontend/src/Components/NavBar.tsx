@@ -11,12 +11,18 @@ import {
 import { useContext, useEffect, useState } from "react";
 import { AuthenticatedContext, UserContext } from "../Context/Contexts";
 import Dropdown from "./DropDown";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { routes } from "../routes";
 import ErrorModal from "./ErrorModal";
 import api from "../api";
 
-const NavBar = () => {
+const NavBar = ({
+  conversation_id,
+  handleArchive,
+}: {
+  conversation_id: string | null;
+  handleArchive: (e: string | null) => void;
+}) => {
   const { user, token, logout } = useContext(UserContext);
   const {
     isOpenedSideBar,
@@ -25,7 +31,6 @@ const NavBar = () => {
     handleDeleteConversation,
   } = useContext(AuthenticatedContext);
   const navigate = useNavigate();
-  const { conversation_id } = useParams();
   const [navError, setNavError] = useState<string | null>(null);
 
   useEffect(() => setNavError(error), [error]);
@@ -109,7 +114,9 @@ const NavBar = () => {
                       Delete
                     </div>
                   </Dropdown.Button>
-                  <Dropdown.Button onClick={handleLogout}>
+                  <Dropdown.Button
+                    onClick={() => handleArchive(conversation_id)}
+                  >
                     <div className="flex gap-2 justify-start items-center">
                       <Archive size={15} />
                       Archived

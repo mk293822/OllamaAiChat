@@ -17,7 +17,8 @@ class ConversationResource extends JsonResource
         return [
             'title' => $this->title,
             'id' => $this->id,
-            'at' => $this->created_at
+            'at' => $this->created_at,
+            'archived' => $this->archived,
         ];
     }
 }

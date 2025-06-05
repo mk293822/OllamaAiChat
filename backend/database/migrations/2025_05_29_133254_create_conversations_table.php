@@ -15,6 +15,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->string('title');
+            $table->boolean('archived')->default(false);
             $table->timestamps();
         });
     }

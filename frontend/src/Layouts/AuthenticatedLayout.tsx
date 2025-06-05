@@ -5,6 +5,7 @@ import { useContext, useEffect, useState } from "react";
 import api from "../api";
 import { AuthenticatedContext } from "../Context/Contexts";
 import type { GroupedConversation } from "../types";
+import ErrorModal from "../Components/ErrorModal";
 
 interface LocalResponse {
   role: string;
@@ -19,15 +20,20 @@ const AuthenticatedLayout = () => {
     useContext(AuthenticatedContext);
   const [filteredConversations, setFilteredConversations] =
     useState<GroupedConversation>();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Get the messages of the conversation
   useEffect(() => {
     const getMessages = async () => {
-      const response = await api.get(
-        `/api/getMessages/${conversation_id ?? null}`
-      );
-      setLocalMessages(response.data.messages ?? []);
-      setConversations(response.data.conversations);
+      try {
+        const response = await api.get(
+          `/api/getMessages/${conversation_id ?? null}`
+        );
+        setLocalMessages(response.data.messages ?? []);
+        setConversations(response.data.conversations);
+      } catch (error: any) {
+        setErrorMessage(error.response.statusText);
+      }
     };
     getMessages();
   }, [conversation_id]);
@@ -49,6 +55,26 @@ const AuthenticatedLayout = () => {
     }
   }, [deletedConversationIds, conversations]);
 
+  const handleArchive = async (conversation_id: string | null) => {
+    try {
+      await api.post(`/api/archiveConversation/${conversation_id ?? null}`);
+
+      setFilteredConversations((pre) => {
+        const filtered = { ...pre };
+
+        for (const group in filtered) {
+          const key = group as keyof GroupedConversation;
+          filtered[key] = filtered[key]?.filter(
+            (con) => con.id !== conversation_id
+          );
+        }
+        return filtered;
+      });
+    } catch (error: any) {
+      setErrorMessage(error.response.statusText);
+    }
+  };
+
   return (
     <div className=" bg-gray-100 flex h-screen text-xs dark:bg-gray-900 text-gray-900 dark:text-white">
       <div
@@ -61,10 +87,14 @@ const AuthenticatedLayout = () => {
         <SideBar
           conversations={filteredConversations}
           conversation_id={conversation_id ?? null}
+          handleArchive={handleArchive}
         />
       </div>
       <div className="flex-1 flex flex-col">
-        <NavBar />
+        <NavBar
+          conversation_id={conversation_id ?? null}
+          handleArchive={handleArchive}
+        />
         <main className="text-xs flex-1">
           <Outlet
             context={{
@@ -74,6 +104,8 @@ const AuthenticatedLayout = () => {
           />
         </main>
       </div>
+
+      {errorMessage && <ErrorModal message={errorMessage} />}
     </div>
   );
 };
