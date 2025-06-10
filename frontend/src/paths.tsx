@@ -5,66 +5,33 @@ import Register from "./Pages/Auth/Register.tsx";
 import { authRoutes, errorRoutes, routes } from "./routes.ts";
 import Dashboard from "./Pages/Dashboard.tsx";
 import Forbidden from "./Pages/Error/Forbidden.tsx";
-import {
-  LayoutDecider,
-  RequireAuth,
-  RequireGuest,
-} from "./getAuthentication.tsx";
+import AuthenticatedLayout from "./Layouts/AuthenticatedLayout.tsx";
+import GuestLayout from "./Layouts/GuestLayout.tsx";
 
 const paths = [
-  {
-    path: "/",
-    element: <LayoutDecider />,
-    children: [
-      // Authenticated pages
-      {
-        path: routes.dashboard,
-        element: (
-          <RequireAuth>
-            <Dashboard />
-          </RequireAuth>
-        ),
-      },
-      {
-        path: routes.chat,
-        element: (
-          <RequireAuth>
-            <Dashboard />
-          </RequireAuth>
-        ),
-      },
+	{
+		path: "/",
+		element: <AuthenticatedLayout />,
+		children: [
+			{ path: routes.dashboard, element: <Dashboard /> },
+			{ path: routes.chat, element: <Dashboard /> },
+		],
+	},
 
-      // Guest pages
-      {
-        path: routes.welcome,
-        element: (
-          <RequireGuest>
-            <Welcome />
-          </RequireGuest>
-        ),
-      },
-      {
-        path: authRoutes.login,
-        element: (
-          <RequireGuest>
-            <Login />
-          </RequireGuest>
-        ),
-      },
-      {
-        path: authRoutes.register,
-        element: (
-          <RequireGuest>
-            <Register />
-          </RequireGuest>
-        ),
-      },
-    ],
-  },
+	// Guest pages
+	{
+		path: "/",
+		element: <GuestLayout />,
+		children: [
+			{ path: routes.welcome, element: <Welcome /> },
+			{ path: authRoutes.login, element: <Login /> },
+			{ path: authRoutes.register, element: <Register /> },
+		],
+	},
 
-  // Error pages
-  { path: errorRoutes.notFound, element: <PageNotFound /> },
-  { path: errorRoutes.forbidden, element: <Forbidden /> },
+	// Error pages
+	{ path: errorRoutes.notFound, element: <PageNotFound /> },
+	{ path: errorRoutes.forbidden, element: <Forbidden /> },
 ];
 
 export default paths;

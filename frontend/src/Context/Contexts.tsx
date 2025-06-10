@@ -1,19 +1,37 @@
 import { createContext } from "react";
-import type { AuthContextType, UserContextType } from "../types/context";
+import type {
+	AuthContextType,
+	AuthUserContextType,
+	ConversationContextType,
+	ErrorContextType,
+} from "../types/context";
 
-export const UserContext = createContext<UserContextType>({
-  user: null,
-  token: null,
-  logout: () => {},
-  registered: () => {},
+export const AuthContext = createContext<AuthContextType>({
+	user: null,
+	token: null,
+	setUser: () => {},
+	setToken: () => {},
 });
 
-export const AuthenticatedContext = createContext<AuthContextType>({
-  isOpenedSideBar: true,
-  setIsOpenedSideBar: () => {},
-  error: null,
-  handleDeleteConversation: () => {},
-  deletedConversationIds: [],
-  showSearchModal: false,
-  setShowSearchModal: () => {},
+export const AuthenticatedUserContext = createContext<AuthUserContextType>({
+	isOpenedSideBar: true,
+	setIsOpenedSideBar: () => {},
+	showSearchModal: false,
+	setShowSearchModal: () => {},
+	conversationId: null,
+	setConversationId: () => {},
+});
+
+export const ErrorContext = createContext<ErrorContextType>({
+	errorMessage: null,
+	setErrorMessage: () => {},
+});
+
+export const ConversationContext = createContext<ConversationContextType>({
+	handleDeleteConversation: () => {},
+	conversations: undefined,
+	handleArchive: () => {},
+	setConversations: () => {},
+	archivedConversations: undefined,
+	setArchivedConversations: () => {},
 });

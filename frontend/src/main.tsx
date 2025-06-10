@@ -3,18 +3,23 @@ import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import "./index.css";
 import paths from "./paths";
-import UserContextProvider from "./Context/UserContextProvider";
-import AuthenticatedContextProvider from "./Context/AuthenticatedContextProvider";
-
+import AuthContextProvider from "./Context/AuthContextProvider";
+import AuthUserContextProvider from "./Context/AuthUserContextProvider";
+import ErrorContextProvider from "./Context/ErrorContextProvider";
+import ConversationContextProvider from "./Context/ConversationContextProvider";
 
 const router = createBrowserRouter(paths);
 
 createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <UserContextProvider>
-      <AuthenticatedContextProvider>
-        <RouterProvider router={router} />
-      </AuthenticatedContextProvider>
-    </UserContextProvider>
-  </StrictMode>
+	<StrictMode>
+		<ErrorContextProvider>
+			<AuthContextProvider>
+				<AuthUserContextProvider>
+					<ConversationContextProvider>
+						<RouterProvider router={router} />
+					</ConversationContextProvider>
+				</AuthUserContextProvider>
+			</AuthContextProvider>
+		</ErrorContextProvider>
+	</StrictMode>
 );

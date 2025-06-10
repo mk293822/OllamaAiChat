@@ -7,11 +7,9 @@ use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules\Password;
+
 
 class RegisterUserController extends Controller
 {
@@ -25,32 +23,43 @@ class RegisterUserController extends Controller
 
         event(new Registered($user));
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        $token = Auth::login($user);
 
-        Auth::login($user);
-
-        return response()->json(['message' => 'Registered Successfully'])->withCookie(
-            cookie('auth_token', $token, 60 * 24, null, null, true, false, false, "Strict")
-        );
+        return response()->json([
+            'message' => 'Registered Successfully',
+            'user' => $user,
+            'token' => $token,
+        ]);
     }
 
     public function login(LoginRequest $request)
     {
-        $request->authenticate();
+        $token = Auth::attempt($request->only('email', 'password'));
 
-        $token = Auth::user()->createToken('auth_token')->plainTextToken;
+        if (!$token) {
+            return response()->json(['message' => 'Unauthroized'], 401);
+        }
 
-        return response()->json(['message' => 'Logged In Successfully'])->withCookie(
-            cookie('auth_token', $token, 60 * 24, null, null, true, false, false, "Strict")
-        );
+        $user = Auth::user();
+
+        return response()->json([
+            'message' => 'Logged In Successfully',
+            'user' => $user,
+            'token' => $token,
+        ]);
     }
 
-    public function logout(Request $request)
+    public function logout()
     {
-        $request->user()->currentAccessToken()->delete();
+        Auth::logout();
+        return response()->json(['message' => 'Logged out']);
+    }
 
-        return response()->json(['message' => 'Logged out'])->withCookie(
-            Cookie::forget('auth_token')
-        );
+    public function refresh()
+    {
+        return response()->json([
+            'message' => 'Refreshed Successfully',
+            'token' => Auth::refresh(),
+        ]);
     }
 }

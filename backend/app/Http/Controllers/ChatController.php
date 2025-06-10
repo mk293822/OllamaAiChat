@@ -47,30 +47,11 @@ class ChatController extends Controller
 
     public function getMessages(Request $request, $conversation_id = null)
     {
-        $conversations = $this->conversationService->getConversationsByDate($request);
 
         return response()->json([
-            'conversations' => $conversations,
             'messages' => (is_string($conversation_id) && $conversation_id !== "" && $conversation_id !== "null")
                 ? $this->messageService->getMessages($conversation_id, $request)
                 : null,
         ]);
-    }
-
-    public function deleteConversation($conversation_id)
-    {
-        $this->conversationService->deleteConversation($conversation_id);
-
-        return response()->json(['success' => 'Conversation Deleted Successfully']);
-    }
-
-    public function archiveConversation($conversation_id)
-    {
-        $conversation = Conversation::findOrFail($conversation_id);
-
-        $conversation->archived = !$conversation->archived;
-        $conversation->save();
-
-        return response()->json(['conversation' => $conversation]);
     }
 }

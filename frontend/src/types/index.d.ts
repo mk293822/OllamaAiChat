@@ -3,6 +3,7 @@ export type User = {
   name: string;
   email: string;
 };
+
 export type Conversation = {
   title: string;
   id: string;

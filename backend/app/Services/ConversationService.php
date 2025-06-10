@@ -28,9 +28,15 @@ class ConversationService
         }
     }
 
-    public function getConversationsByDate($request)
+    public function getConversationsByDate($request, bool $isArchive = false)
     {
-        $conversations = Conversation::where('archived', false)->orderByDesc('created_at')->get();
+        $conversations = Conversation::orderByDesc('created_at')
+            ->when($isArchive, function ($query) {
+                $query->where('archived', true);
+            }, function ($query) {
+                $query->where('archived', false);
+            })
+            ->get();
 
         $grouped = $conversations->groupBy(function ($conversation) {
             $date = Carbon::parse($conversation->at);
@@ -62,15 +68,11 @@ class ConversationService
         $conversation = Conversation::findOrFail($id);
 
         try {
-            DB::beginTransaction();
 
             $conversation->messages()->delete();
 
             $conversation->delete();
-
-            DB::commit();
         } catch (\Exception $e) {
-            DB::rollBack();
             Log::error('Conversation deletion failed: ' . $e->getMessage());
             return response()->json(['error' => 'Conversation deletion failed'], 500);
         }
