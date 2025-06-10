@@ -52,10 +52,9 @@ const ConversationContextProvider = ({ children }: PropsWithChildren) => {
 		const controller = new AbortController();
 		const getConversations = async () => {
 			try {
-				const response = await api.get(
-					`/api/getConversations`,
-					{ signal: controller.signal }
-				);
+				const response = await api.get(`/api/getConversations`, {
+					signal: controller.signal,
+				});
 
 				setConversations(response.data.conversations);
 				setArchivedConversations(response.data.archivedConversations);
@@ -67,10 +66,10 @@ const ConversationContextProvider = ({ children }: PropsWithChildren) => {
 				}
 			}
 		};
-		if(token) getConversations();
+		if (token) getConversations();
 
 		return () => controller.abort();
-	}, [setErrorMessage, token, filterConversation]);
+	}, [setErrorMessage, token]);
 
 	// Delete the conversation
 	const handleDeleteConversation = useCallback(
